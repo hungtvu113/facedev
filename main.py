@@ -26,8 +26,9 @@ from src.core.face_detector import FaceDetector
 from src.core.face_encoder import FaceEncoder
 from src.core.face_recognizer import FaceRecognizer
 from src.core.emotion_detector import EmotionDetector
+from src.core.drowsiness_detector import DrowsinessDetector
 from src.database.db_manager import DatabaseManager
-from src.utils.helpers import draw_face_box, draw_landmarks, draw_info_panel, draw_stats_box, remove_vietnamese_accents
+from src.utils.helpers import draw_face_box, draw_landmarks, draw_info_panel, draw_stats_box, remove_vietnamese_accents, play_alarm
 from src.config import *
 
 
@@ -57,6 +58,14 @@ class FaceRecognitionApp:
         
         print("[5/5] Initializing Emotion Detector...")
         self.emotion_detector = EmotionDetector(use_deepface=True)
+        
+        print("[6/6] Initializing Drowsiness Detector...")
+        self.drowsiness_detector = DrowsinessDetector(
+            ear_thresh=EAR_THRESHOLD,
+            mar_thresh=MAR_THRESHOLD,
+            ear_frames=EAR_CONSEC_FRAMES,
+            mar_frames=YAWN_CONSEC_FRAMES
+        )
         
         # Camera
         self.cap = None
@@ -106,6 +115,23 @@ class FaceRecognitionApp:
                 color = COLOR_RED
                 label = f"Unknown ({result.confidence:.0%})" if result else "Unknown"
             
+            # --- PHÂN TÍCH BUỒN NGỦ (DROWSINESS) ---
+            if face.landmarks is not None:
+                status, alarm, ear, mar = self.drowsiness_detector.process(face.landmarks)
+                
+                # Vẽ UI cảnh báo lớn trên màn hình
+                cv2.putText(frame, f"Driver Status: {status}", (20, 40), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 0.8, COLOR_RED if alarm else COLOR_GREEN, 2)
+                cv2.putText(frame, f"EAR: {ear:.2f} | MAR: {mar:.2f} | Yawns: {self.drowsiness_detector.total_yawns}", 
+                           (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, COLOR_YELLOW, 2)
+                
+                if alarm:
+                    color = COLOR_RED # Đổi màu Box thành đỏ khẩn cấp
+                    cv2.putText(frame, "WAKE UP!!!", (x, y - 40), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 1.2, COLOR_RED, 3)
+                    play_alarm() # Kích hoạt còi
+            # --------------------------------------
+
             # Vẽ bounding box
             frame = draw_face_box(frame, face.bbox, label, color)
             

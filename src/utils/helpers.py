@@ -279,3 +279,31 @@ def create_face_grid(faces: List[np.ndarray], cols: int = 4,
     
     return grid
 
+import threading
+import platform
+
+_is_playing_alarm = False
+
+def play_alarm():
+    """Phát âm thanh bíp cảnh báo (Chạy trên luồng riêng để không block camera)"""
+    global _is_playing_alarm
+    if _is_playing_alarm:
+        return
+        
+    def _beep():
+        global _is_playing_alarm
+        _is_playing_alarm = True
+        try:
+            if platform.system() == "Windows":
+                import winsound
+                # Tần số 2500Hz, kéo dài 500ms
+                winsound.Beep(2500, 500)
+            else:
+                print('\a')  # Tiếng chuông terminal cho Linux/Mac
+        except:
+            pass
+        finally:
+            _is_playing_alarm = False
+
+    threading.Thread(target=_beep, daemon=True).start()
+

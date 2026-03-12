@@ -43,3 +43,9 @@ EMOTIONS_VI = ["Tức giận", "Ghê tởm", "Sợ hãi", "Vui vẻ", "Buồn", 
 GENDERS = ["Male", "Female"]
 GENDERS_VI = ["Nam", "Nữ"]
 
+# Drowsiness Detection (Cảnh báo ngủ gật)
+EAR_THRESHOLD = 0.22      # Ngưỡng nhắm mắt (dưới mức này coi là nhắm)
+MAR_THRESHOLD = 0.6       # Ngưỡng ngáp (trên mức này coi là ngáp)
+EAR_CONSEC_FRAMES = 15    # Số frame liên tục nhắm mắt để phát báo động
+YAWN_CONSEC_FRAMES = 10   # Số frame liên tục mở to miệng để ghi nhận 1 lần ngáp
+
