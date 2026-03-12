@@ -281,29 +281,50 @@ def create_face_grid(faces: List[np.ndarray], cols: int = 4,
 
 import threading
 import platform
+import random
+try:
+    import pyttsx3
+    HAS_TTS = True
+except ImportError:
+    HAS_TTS = False
 
 _is_playing_alarm = False
 
 def play_alarm():
-    """Phát âm thanh bíp cảnh báo (Chạy trên luồng riêng để không block camera)"""
+    """Phát âm thanh cảnh báo/mắng (Chạy trên luồng riêng để không block camera)"""
     global _is_playing_alarm
     if _is_playing_alarm:
         return
         
-    def _beep():
+    def _scold():
         global _is_playing_alarm
         _is_playing_alarm = True
         try:
-            if platform.system() == "Windows":
-                import winsound
-                # Tần số 2500Hz, kéo dài 500ms
-                winsound.Beep(2500, 500)
+            if HAS_TTS:
+                engine = pyttsx3.init()
+                # Tăng tốc độ đọc cho có vẻ gắt gỏng, vội vã
+                engine.setProperty('rate', 180)
+                
+                # Danh sách các câu mắng để tránh nhàm chán
+                scolds = [
+                    "Này! Mở mắt ra! Đang lái xe đấy!",
+                    "Dậy ngay! Ngủ gật trên vô lăng à?",
+                    "Trời ơi! Buồn ngủ thì tấp vào lề đi!",
+                    "Tỉnh táo lại đi! Lái xe kiểu gì thế hả!"
+                ]
+                engine.say(random.choice(scolds))
+                engine.runAndWait()
             else:
-                print('\a')  # Tiếng chuông terminal cho Linux/Mac
-        except:
+                # Fallback về tiếng Bíp nếu không có thư viện
+                if platform.system() == "Windows":
+                    import winsound
+                    winsound.Beep(2500, 500)
+                else:
+                    print('\a')
+        except Exception:
             pass
         finally:
             _is_playing_alarm = False
 
-    threading.Thread(target=_beep, daemon=True).start()
+    threading.Thread(target=_scold, daemon=True).start()
 
