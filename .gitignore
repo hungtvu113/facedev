@@ -1,2 +1,5 @@
 # Bỏ qua thư mục tạm của Kilo Auto-Watch
 .kilo-tasks
+
+# Bỏ qua thư mục tạm của Master Context
+.master-context

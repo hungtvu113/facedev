@@ -279,52 +279,40 @@ def create_face_grid(faces: List[np.ndarray], cols: int = 4,
     
     return grid
 
-import threading
+import os
 import platform
-import random
-try:
-    import pyttsx3
-    HAS_TTS = True
-except ImportError:
-    HAS_TTS = False
 
-_is_playing_alarm = False
+try:
+    # Sử dụng pygame để phát âm thanh nền mượt mà
+    import pygame
+    pygame.mixer.init()
+    HAS_PYGAME = True
+except ImportError:
+    HAS_PYGAME = False
 
 def play_alarm():
-    """Phát âm thanh cảnh báo/mắng (Chạy trên luồng riêng để không block camera)"""
-    global _is_playing_alarm
-    if _is_playing_alarm:
-        return
+    """Phát file MP3 cảnh báo (Chạy ngầm không block camera)"""
+    if HAS_PYGAME:
+        # Đường dẫn tới file mp3 cảnh báo
+        alarm_path = os.path.join("data", "alarm.mp3")
         
-    def _scold():
-        global _is_playing_alarm
-        _is_playing_alarm = True
-        try:
-            if HAS_TTS:
-                engine = pyttsx3.init()
-                # Tăng tốc độ đọc cho có vẻ gắt gỏng, vội vã
-                engine.setProperty('rate', 180)
-                
-                # Danh sách các câu mắng để tránh nhàm chán
-                scolds = [
-                    "Này! Mở mắt ra! Đang lái xe đấy!",
-                    "Dậy ngay! Ngủ gật trên vô lăng à?",
-                    "Trời ơi! Buồn ngủ thì tấp vào lề đi!",
-                    "Tỉnh táo lại đi! Lái xe kiểu gì thế hả!"
-                ]
-                engine.say(random.choice(scolds))
-                engine.runAndWait()
-            else:
-                # Fallback về tiếng Bíp nếu không có thư viện
-                if platform.system() == "Windows":
-                    import winsound
-                    winsound.Beep(2500, 500)
-                else:
-                    print('\a')
-        except Exception:
-            pass
-        finally:
-            _is_playing_alarm = False
-
-    threading.Thread(target=_scold, daemon=True).start()
+        # Kiểm tra xem có đang phát âm thanh không để tránh phát đè
+        if pygame.mixer.music.get_busy():
+            return
+            
+        if os.path.exists(alarm_path):
+            try:
+                pygame.mixer.music.load(alarm_path)
+                pygame.mixer.music.play()
+            except Exception as e:
+                print(f"[Cảnh báo] Lỗi phát MP3: {e}")
+        else:
+            print(f"[Cảnh báo] Không tìm thấy file {alarm_path}. Vui lòng thêm file MP3 vào thư mục data/")
+    else:
+        # Fallback về tiếng bíp của hệ thống nếu chưa cài pygame
+        if platform.system() == "Windows":
+            import winsound
+            winsound.Beep(2500, 500)
+        else:
+            print('\a')
 

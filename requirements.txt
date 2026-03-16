@@ -16,3 +16,6 @@ tf-keras>=2.15.0
 # Optional - for better performance
 # onnxruntime>=1.16.0
 
+# Optional - Audio alarm playback
+pygame>=2.0.0
+
